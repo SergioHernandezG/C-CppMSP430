@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/gpio.h"
+#include "drivers/pinout.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
+#include "utils/uartstdio.h"
+float nu=0,num1=0;
+int n=0,NN=0,k=0,n1=0,n2=0;
+int parteentera=0;
+int partedecimal=0;
+float x[8]={1,2,3,4,4,3,2,1};
+float xpar[4]={1,1,1,1};
+float ximpar[4]={1,1,1,1};
+float y[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float Real[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float imaginario[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xparre[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xparim[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xiparre[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xiparim[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xre[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float xim[12]={1,1,1,1,1,1,1,1,1,1,1,1};
+float yn2=1,Val=0,Re=0,Im=0;
+int unidades=0,decimas=0,centecimas=0;
+void conv();
+void Imprimir(float un,int n);
+void DFTsinIM(float num[4]);
+void Exponencial(float num1);
+
+uint32_t g_ui32SysClock;
+#ifdef DEBUG
+void
+__error__(char *pcFilename, uint32_t ui32Line)
+{
+}
+#endif
+void
+ConfigureUART(void)
+{
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
+    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
+    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    UARTStdioConfig(0, 115200, g_ui32SysClock);
+}
+
+int
+main(void)
+{
+
+    g_ui32SysClock = MAP_SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
+                SYSCTL_OSC_MAIN | SYSCTL_USE_PLL |
+                SYSCTL_CFG_VCO_480), 120000000);
+
+    PinoutSet(false, false);
+
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTN_BASE, GPIO_PIN_1);
+    ConfigureUART();
+    /************************************************************empieza****************/
+      /**-----------separacion de los vectores pares con los imarpares*/
+      while(n<7){
+            if(n<4){
+                xpar[n]=x[n*2];
+            }
+            if(n<4){
+                ximpar[n]=x[n*2+1];
+            }
+          //xpar[n];
+          //  Imprimir(nu,n);
+
+            n++;
+        }
+      ///---------------------separacion de reales con imaginarios-------
+
+      DFTsinIM(xpar);
+      /*xparim=imaginario;
+      DFTsinIM(ximpar);
+      xiparre=Real;
+      xiparim=imaginario;*/
+
+    /// ------------------------termina------------------
+    while(1)
+    {
+        LEDWrite(CLP_D1, 1);
+        SysCtlDelay(g_ui32SysClock / 10 / 3);
+        LEDWrite(CLP_D1, 0);
+        SysCtlDelay(g_ui32SysClock / 10 / 3);
+    }
+}
+
+///---------------------imprimir--------------
+void Imprimir(float nu,int n){
+    if(nu<0){
+                    nu=nu*-1;
+                    partedecimal=nu;
+                    parteentera=nu*100000;
+                    partedecimal=parteentera-partedecimal*100000;
+                    parteentera=nu;
+                    if(partedecimal<10000){
+                    UARTprintf("y[%d]=-%d.0%d \n",n,parteentera,partedecimal);
+                    }
+                    else{
+                    UARTprintf("y[%d]=-%d.%d \n",n,parteentera,partedecimal);
+                    }
+                }
+                else{
+                    partedecimal=nu;
+                    parteentera=nu*100000;
+                    partedecimal=parteentera-partedecimal*100000;
+                    parteentera=nu;
+                    if(partedecimal<10000){
+                    UARTprintf("y[%d]=%d.0%d \n",n,parteentera,partedecimal);
+                    }
+                    else{
+                    UARTprintf("y[%d]=%d.%d \n",n,parteentera,partedecimal);
+                    }
+                }
+
+}
+
+void DFTsinIM(float num[4]){
+ //   k=0;
+  //  n1=0;
+   //for(k=0;k<4;k++){
+        while(n1<4){
+                num1=(2*k*n1)/8;
+                num1=num1*3.1416;
+                Re=cosf(3.1416*0.25);
+                Im=-1*sinf(num1);
+                nu=Re;
+                Imprimir(nu,1);
+            if(n1==0){
+               xre[n1]=num[n1]*Re;
+               xim[n1]=num[n1]*Im;
+            }
+            if(n1>0){
+               xre[n1]=xre[n1-1]+num[n1]*Re;
+               xim[n1]=xim[n1-1]+num[n1]*Im;
+            }
+            n1++;
+        }
+      //  Real[k]=xre[3];
+      //  imaginario[k]=xim[3];
+
+  //  }
+
+}
+/*
+void Exponencial(float num1){
+    Re=cos(num1*3.1416);
+    Im=-1*sin(num1*3.1416);
+}*/
